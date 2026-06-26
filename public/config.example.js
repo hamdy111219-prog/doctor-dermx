@@ -10,8 +10,8 @@
 
 window.APP_CONFIG = {
   // Supabase (optional)
-  SUPABASE_URL: "https://your-project-ref.supabase.co",
-  SUPABASE_ANON_KEY: "REPLACE_WITH_YOUR_ANON_KEY",
+  SUPABASE_URL: "https://rjrckwzxoewywdwcxxwm.supabase.co",
+  SUPABASE_ANON_KEY: "sb_publishable_7VJnVCPALwNyaVbGcaOXHw_xol8AXt6",
   SUPABASE_BUCKET: "skin-images",
 
   // API endpoints (served by Netlify Functions via netlify.toml redirects)
