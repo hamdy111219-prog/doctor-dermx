@@ -146,34 +146,93 @@ async function maybeUploadImage(dataUrl) {
 }
 
 /* =================== STEP 3: INTERVIEW ==================================== */
+const REQUEST_TIMEOUT_MS = 35000; // don't spin forever
+
 async function nextTurn() {
   showVeil(state.history.length === 0 ? "Reading the image…" : "Thinking about your answer…");
+
+  const endpoint = CFG.ANALYZE_ENDPOINT || "/api/analyze";
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
   try {
-    const res = await fetch(CFG.ANALYZE_ENDPOINT || "/api/analyze", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        image: { data: state.imageBase64, mediaType: state.mediaType },
-        history: state.history
-      })
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Analysis failed.");
+    let res;
+    try {
+      res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          image: { data: state.imageBase64, mediaType: state.mediaType },
+          history: state.history
+        }),
+        signal: controller.signal
+      });
+    } catch (networkErr) {
+      if (networkErr.name === "AbortError") {
+        throw new Error(
+          `No response after ${REQUEST_TIMEOUT_MS / 1000}s. The function may be timing out — ` +
+          `check Netlify → Logs → Functions → analyze, and that the function isn't exceeding its time limit.`
+        );
+      }
+      throw new Error(
+        `Could not reach ${endpoint}. The request failed before the server replied — usually a wrong ` +
+        `endpoint path, a redirect issue, or CORS. Open F12 → Network and inspect the "analyze" request.`
+      );
+    }
+
+    // Read as text first so we can show non-JSON error pages (e.g. a 404 HTML page).
+    const text = await res.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      throw new Error(
+        `The server replied with status ${res.status} but the body wasn't JSON. ` +
+        `That usually means the request hit the HTML page instead of the function ` +
+        `(check the /api/analyze redirect in netlify.toml). First 200 chars:\n` +
+        text.slice(0, 200)
+      );
+    }
+
+    if (!res.ok) {
+      const detail = data.detail ? `\n${data.detail}` : "";
+      throw new Error(`(${res.status}) ${data.error || "Analysis failed."}${detail}`);
+    }
 
     updateLiveDifferential(data);
 
     if (data.phase === "complete") {
       renderResult(data.result);
       saveSession(data.result);
-    } else {
+    } else if (data.next_question) {
       renderQuestion(data);
+    } else {
+      throw new Error("The model didn't return a question or a result. Raw:\n" + text.slice(0, 300));
     }
   } catch (e) {
-    toast(e.message || "Something went wrong.");
     console.error(e);
+    showInterviewError(e.message || "Something went wrong.");
   } finally {
+    clearTimeout(timer);
     hideVeil();
   }
+}
+
+// Render the error visibly in the question card, with a retry button,
+// instead of leaving the loading veil up forever.
+function showInterviewError(message) {
+  state.selected = null; // so the normal "Next" handler short-circuits; retry uses onclick below
+  $("#qIndex").textContent = "Something went wrong";
+  $("#qHint").textContent = "";
+  $("#qcard").innerHTML =
+    `<p class="q-text" style="color:var(--rose)">Couldn't get a response</p>` +
+    `<pre style="white-space:pre-wrap;font-family:var(--mono);font-size:.8rem;` +
+    `color:var(--ink-soft);background:var(--surface-2);border:1px solid var(--line-soft);` +
+    `border-radius:10px;padding:12px;margin:0;overflow:auto">${escapeHtml(message)}</pre>`;
+  const btn = $("#answerBtn");
+  btn.disabled = false;
+  btn.textContent = "Try again";
+  btn.onclick = () => { btn.onclick = null; nextTurn(); };
 }
 
 function updateLiveDifferential(data) {
