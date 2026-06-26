@@ -65,10 +65,10 @@ function toast(msg) {
 const dropzone = $("#dropzone");
 const fileInput = $("#fileInput");
 
-dropzone.addEventListener("click", () => fileInput.click());
-dropzone.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileInput.click(); }
-});
+// NOTE: #dropzone is a <label> wrapping #fileInput, so a click/tap opens the
+// file picker NATIVELY. We deliberately do NOT call fileInput.click() here —
+// doing both fires the picker twice (it reopens after you choose, and breaks
+// the camera on mobile).
 ["dragover", "dragenter"].forEach((ev) =>
   dropzone.addEventListener(ev, (e) => { e.preventDefault(); dropzone.classList.add("drag"); })
 );

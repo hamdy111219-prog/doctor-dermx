@@ -123,6 +123,13 @@ html, body {
   text-align: center;
   transition: border-color .2s, background .2s, transform .1s;
 }
+/* Hide the input visually but keep it functional — display:none breaks the
+   iOS camera ("Take Photo"), so use the clip pattern instead. */
+.dropzone .file-input {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
 .dropzone:hover, .dropzone:focus-visible {
   border-color: var(--teal);
   background: var(--surface-2);
