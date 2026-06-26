@@ -1,0 +1,24 @@
+# netlify.toml
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+# Friendlier API paths: /api/analyze -> /.netlify/functions/analyze
+[[redirects]]
+  from = "/api/analyze"
+  to = "/.netlify/functions/analyze"
+  status = 200
+
+[[redirects]]
+  from = "/api/save-session"
+  to = "/.netlify/functions/save-session"
+  status = 200
+
+# SPA-style fallback (single page)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

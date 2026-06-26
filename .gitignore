@@ -1,0 +1,16 @@
+# secrets
+.env
+.env.*
+!.env.example
+
+# the real browser config (copy of config.example.js)
+public/config.js
+
+# deps & build
+node_modules/
+.netlify/
+dist/
+
+# os / editor
+.DS_Store
+*.log

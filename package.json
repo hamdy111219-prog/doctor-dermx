@@ -1,0 +1,17 @@
+{
+  "name": "derma-prototype",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Educational dermatology differential-diagnosis prototype (NOT for clinical use).",
+  "scripts": {
+    "dev": "netlify dev",
+    "deploy": "netlify deploy --prod"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.40.0",
+    "@supabase/supabase-js": "^2.45.0"
+  },
+  "devDependencies": {
+    "netlify-cli": "^17.0.0"
+  }
+}
