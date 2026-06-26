@@ -1,1 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Differentia — dermatology reasoning prototype</title>
+  <meta name="description" content="An educational prototype that reasons through a skin finding. Not for clinical use." />
 
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;450;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Cropper.js -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" />
+
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="frame">
+    <header class="masthead">
+      <div class="wordmark">
+        <span class="dot" aria-hidden="true"></span>
+        Differentia
+      </div>
+      <p class="tagline">An instrument that reasons from a photo, one question at a time.</p>
+    </header>
+
+    <!-- progress rail -->
+    <nav class="rail" aria-label="Progress">
+      <ol>
+        <li data-step="upload" class="is-active"><span>01</span> Capture</li>
+        <li data-step="crop"><span>02</span> Frame</li>
+        <li data-step="interview"><span>03</span> Interview</li>
+        <li data-step="result"><span>04</span> Readout</li>
+      </ol>
+    </nav>
+
+    <main>
+      <!-- STEP 1: UPLOAD ----------------------------------------------------->
+      <section class="panel is-active" data-panel="upload">
+        <h1 class="panel-title">Start with a clear photo</h1>
+        <p class="panel-lede">Upload a well-lit, in-focus image of the skin finding. You'll frame the
+          exact area in the next step.</p>
+
+        <label class="dropzone" id="dropzone" tabindex="0">
+          <input type="file" id="fileInput" accept="image/*" hidden />
+          <svg class="dz-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L8 8m4-4 4 4M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+          <span class="dz-primary">Drop an image, or click to browse</span>
+          <span class="dz-secondary">JPG or PNG · a single finding works best</span>
+        </label>
+      </section>
+
+      <!-- STEP 2: CROP ------------------------------------------------------->
+      <section class="panel" data-panel="crop">
+        <h1 class="panel-title">Frame the finding</h1>
+        <p class="panel-lede">Crop tightly to the area of interest — less background means a sharper read.</p>
+
+        <div class="cropper-stage">
+          <img id="cropTarget" alt="Image to crop" />
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-ghost" id="backToUpload" type="button">Choose another</button>
+          <button class="btn btn-primary" id="confirmCrop" type="button">Use this crop →</button>
+        </div>
+      </section>
+
+      <!-- STEP 3: INTERVIEW -------------------------------------------------->
+      <section class="panel" data-panel="interview">
+        <div class="interview-grid">
+          <aside class="case-aside">
+            <div class="thumb-wrap">
+              <img id="caseThumb" alt="Cropped finding" />
+            </div>
+            <div class="meter">
+              <div class="meter-head">
+                <span>Working confidence</span>
+                <span class="meter-val" id="confidenceVal">—</span>
+              </div>
+              <div class="meter-track"><div class="meter-fill" id="confidenceFill"></div></div>
+            </div>
+            <div class="live-dx" id="liveDx" hidden>
+              <h3>Live differential</h3>
+              <ul id="liveDxList"></ul>
+            </div>
+          </aside>
+
+          <div class="qcard-wrap">
+            <div class="qcounter"><span id="qIndex">Question 1</span><span id="qHint"></span></div>
+
+            <div class="qcard" id="qcard" aria-live="polite">
+              <!-- question injected here -->
+            </div>
+
+            <div class="qfoot">
+              <button class="btn btn-primary" id="answerBtn" type="button" disabled>Next</button>
+            </div>
+
+            <p class="debug" id="debugLine" hidden></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- STEP 4: RESULT ----------------------------------------------------->
+      <section class="panel" data-panel="result">
+        <div class="result-head">
+          <span class="eyebrow">Most likely</span>
+          <h1 class="dx-name" id="dxName">—</h1>
+          <div class="dx-meta">
+            <span class="pill" id="dxConfidence">—</span>
+            <span class="dx-prob mono" id="dxProb">—</span>
+          </div>
+        </div>
+
+        <div class="result-block">
+          <h2>Management plan</h2>
+          <p id="managementPlan"></p>
+        </div>
+
+        <div class="result-block next-step">
+          <h2>Highest-yield next step</h2>
+          <p id="nextStep"></p>
+        </div>
+
+        <div class="result-block">
+          <h2>Differential — probability readout</h2>
+          <ul class="dx-readout" id="dxReadout"></ul>
+        </div>
+
+        <div class="result-block redflags">
+          <h2>Red flags</h2>
+          <p id="redFlags"></p>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-ghost" id="restartBtn" type="button">New case</button>
+          <span class="save-state mono" id="saveState"></span>
+        </div>
+      </section>
+
+      <!-- loading veil -->
+      <div class="veil" id="veil" hidden>
+        <div class="veil-card">
+          <div class="pulse"><span></span><span></span><span></span></div>
+          <p id="veilMsg">Reading the image…</p>
+        </div>
+      </div>
+
+      <!-- error toast -->
+      <div class="toast" id="toast" hidden></div>
+    </main>
+
+    <footer class="legal">
+      <strong>Prototype — not a medical device.</strong> This tool is for education and demonstration
+      only. It does not diagnose, and it must not be used for decisions about real patients.
+    </footer>
+  </div>
+
+  <!-- libs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="./config.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
