@@ -284,6 +284,9 @@ html, body {
   position: fixed; inset: 0; display: grid; place-items: center;
   background: rgba(238,242,245,.72); backdrop-filter: blur(3px); z-index: 50;
 }
+/* The author rule above sets display:grid, which would override the [hidden]
+   attribute and pin the overlay on screen. This restores normal hiding. */
+.veil[hidden] { display: none; }
 .veil-card {
   background: var(--surface); border: 1px solid var(--line);
   border-radius: var(--radius); padding: 26px 34px; box-shadow: var(--shadow);
